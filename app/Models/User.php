@@ -74,10 +74,6 @@ class User extends Authenticate implements FilamentUser, HasTenants
         return $this->belongsToMany(Team::class);
     }
 
-    public function country(): BelongsTo
-    {
-        return $this->belongsTo(Country::class, 'country');
-    }
 
     public function getTenants(Panel $panel): array|Collection
     {
