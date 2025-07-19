@@ -2,7 +2,7 @@
 
 return [
 
-    'title' => 'არედაქტირებთ :label',
+    'title' => 'რედაქტირება',
 
     'breadcrumb' => 'რედაქტირება',
 

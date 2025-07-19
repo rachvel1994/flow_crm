@@ -2,7 +2,7 @@
 
 return [
 
-    'title' => 'ქმნით :label',
+    'title' => 'ახალი :label',
 
     'breadcrumb' => 'შექმნა',
 

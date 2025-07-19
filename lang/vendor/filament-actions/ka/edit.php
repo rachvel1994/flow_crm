@@ -8,7 +8,7 @@ return [
 
         'modal' => [
 
-            'heading' => 'არედაქტირებ :label',
+            'heading' => 'რედაქტირება',
 
             'actions' => [
 
