@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->boolean('is_active')->default(true);
             $table->boolean('send_sms')->default(false);
             $table->boolean('send_email')->default(false);
+            $table->unsignedInteger('order_column');
             $table->text('message')->nullable();
             $table->timestamps();
             $table->unique(['team_id', 'name']);
