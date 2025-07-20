@@ -2,36 +2,39 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\CategoryResource\Pages;
-use App\Models\Category;
+use App\Filament\Resources\UserTypeResource\Pages;
+use App\Filament\Resources\UserTypeResource\RelationManagers;
+use App\Models\UserType;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class CategoryResource extends Resource
+class UserTypeResource extends Resource implements HasShieldPermissions
 {
-    protected static ?string $model = Category::class;
-    protected static ?int $navigationSort = 5;
+    protected static ?string $model = UserType::class;
+    protected static ?string $label = 'კონტაქტის ტიპი';
+    protected static ?string $navigationLabel = 'კონტაქტის ტიპი';
+    protected static ?int $navigationSort = 3;
 
-    protected static ?string $label = 'კატეგორია';
-    protected static ?string $navigationLabel = 'კატეგორია';
-
-    protected static ?string $navigationIcon = 'heroicon-o-bars-3';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->label('სახელი')
-                    ->unique(ignoreRecord: true)
+                    ->label('ტიპი')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Toggle::make('is_active')
                     ->label('სტატუსი')
-                    ->default(true),
+                    ->default(true)
+                    ->required(),
             ]);
     }
 
@@ -40,7 +43,7 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('სახელი')
+                    ->label('ტიპი')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\ToggleColumn::make('is_active')
@@ -48,7 +51,7 @@ class CategoryResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -81,14 +84,25 @@ class CategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCategories::route('/'),
-            'create' => Pages\CreateCategory::route('/create'),
-            'edit' => Pages\EditCategory::route('/{record}/edit'),
+            'index' => Pages\ListUserTypes::route('/'),
+            'create' => Pages\CreateUserType::route('/create'),
+            'edit' => Pages\EditUserType::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
         ];
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return 'პროდუქტი';
+        return 'კონტაქტები';
     }
 }

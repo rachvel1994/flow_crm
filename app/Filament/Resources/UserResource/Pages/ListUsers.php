@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Mail;
+use Mohamedsabil83\FilamentFormsTinyeditor\Components\TinyEditor;
 use Spatie\Permission\Models\Role;
 
 class ListUsers extends ListRecords
@@ -111,7 +112,7 @@ class ListUsers extends ListRecords
                         ->label('სათაური')
                         ->required(),
 
-                    RichEditor::make('message')
+                    TinyEditor::make('message')
                         ->label('ტექსტი')
                         ->required(),
 
@@ -129,6 +130,7 @@ class ListUsers extends ListRecords
                         ->relationship('roles', 'name')
                 ])
                 ->action(function (array $data) {
+
                     $contactEmails = \App\Models\User::query()
                         ->when($data['contacts'], fn($q) => $q->whereIn('id', $data['contacts']))
                         ->pluck('email')
@@ -143,7 +145,6 @@ class ListUsers extends ListRecords
                         ->filter()
                         ->unique()
                         ->values();
-
                     foreach ($recipients as $email) {
                         Mail::to($email)->send(new MassMessageMail(
                             title: $data['title'],

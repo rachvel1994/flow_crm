@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->date('birthdate')->nullable()->after('surname');
             $table->string('country')->nullable()->after('birthdate');
             $table->jsonb('image')->nullable()->after('country');
+            $table->foreignId('type_id')->nullable()->after('image');
         });
     }
 
@@ -30,6 +31,7 @@ return new class extends Migration {
                 'birthdate',
                 'country',
                 'image',
+                'type_id',
             ]);
         });
     }

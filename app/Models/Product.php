@@ -17,6 +17,7 @@ class Product extends Model
         'category_id',
         'price',
         'images',
+        'description',
         'b2b_price',
         'sale_price',
         'color_id',

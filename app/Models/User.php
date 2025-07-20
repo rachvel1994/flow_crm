@@ -32,6 +32,7 @@ class User extends Authenticate implements FilamentUser, HasTenants
     protected $fillable = [
         'name',
         'email',
+        'type_id',
         'password',
         'surname',
         'birthdate',
@@ -93,6 +94,11 @@ class User extends Authenticate implements FilamentUser, HasTenants
     public function socialLinks(): HasMany
     {
         return $this->hasMany(UserSocialLink::class);
+    }
+
+    public function user_type(): BelongsTo
+    {
+        return $this->belongsTo(UserType::class, 'type_id');
     }
 
 

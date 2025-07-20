@@ -4,14 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TaskStatusResource\Pages;
 use App\Models\TaskStatus;
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
 class TaskStatusResource extends Resource implements HasShieldPermissions
 {
@@ -25,20 +24,76 @@ class TaskStatusResource extends Resource implements HasShieldPermissions
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('სვეტი')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\ColorPicker::make('color')
-                    ->label('ფერი')
-                    ->required(),
+        return $form->schema([
+            Forms\Components\TextInput::make('name')
+                ->label('სვეტის სახელი')
+                ->required()
+                ->maxLength(255),
+
+            Forms\Components\ColorPicker::make('color')
+                ->label('ფერი')
+                ->required(),
+            Forms\Components\Grid::make(3)->schema([
                 Forms\Components\Toggle::make('is_active')
                     ->label('სტატუსი')
-                    ->default(true)
-                    ->required(),
-            ]);
+                    ->default(true),
+
+                Forms\Components\Toggle::make('send_sms')
+                    ->label('SMS გაგზავნა'),
+
+                Forms\Components\Toggle::make('send_email')
+                    ->label('Email გაგზავნა'),
+                Forms\Components\Select::make('visible_roles')
+                    ->label('სვეტის ნახვის უფლება')
+                    ->multiple()
+                    ->relationship('visibleRoles', 'name')
+                    ->preload()
+                    ->searchable()
+                    ->dehydrated(true),
+
+                Forms\Components\Select::make('only_admin_move_roles')
+                    ->label('წინ გადასვლის უფლება')
+                    ->multiple()
+                    ->relationship('onlyAdminMoveRoles', 'name')
+                    ->preload()
+                    ->searchable()
+                    ->dehydrated(true)
+                    ->visible(function ($get, $record) {
+                        $teamId = Filament::getTenant()?->id;
+                        if (!$teamId) return true;
+
+                        $maxOrder = TaskStatus::where('team_id', $teamId)->max('order_column');
+
+                        return !$record || $record->order_column < $maxOrder;
+                    }),
+
+
+                Forms\Components\Select::make('can_move_back_roles')
+                    ->label('უკან დაბრუნების უფლება')
+                    ->multiple()
+                    ->relationship('canMoveBackRoles', 'name')
+                    ->preload()
+                    ->searchable()
+                    ->dehydrated(true)
+                    ->visible(function ($get, $record) {
+                        $teamId = Filament::getTenant()?->id;
+                        if (!$teamId) return true;
+
+                        $minOrder = TaskStatus::where('team_id', $teamId)->min('order_column');
+
+                        return !$record || $record->order_column > $minOrder;
+                    }),
+            ]),
+
+            Forms\Components\Textarea::make('message')
+                ->label('შეტყობინება')
+                ->maxLength(1000)
+                ->rows(3)
+                ->columnSpanFull()
+                ->nullable(),
+
+
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -48,26 +103,29 @@ class TaskStatusResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('name')
                     ->label('სვეტი')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('team.name')
-                    ->label('ჯგუფი')
-                    ->numeric()
-                    ->sortable(),
+
                 Tables\Columns\ToggleColumn::make('is_active')
-                    ->label('სტატუსი'),
+                    ->label('აქტიური'),
+
+                Tables\Columns\IconColumn::make('send_sms')
+                    ->label('SMS')
+                    ->boolean(),
+
+                Tables\Columns\IconColumn::make('send_email')
+                    ->label('Email')
+                    ->boolean(),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('დამატებულია')
+                    ->label('შეკნა')
                     ->dateTime()
-                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('განახლებულია')
+                    ->label('განახლდა')
                     ->dateTime()
-                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
@@ -80,9 +138,7 @@ class TaskStatusResource extends Resource implements HasShieldPermissions
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -93,7 +149,6 @@ class TaskStatusResource extends Resource implements HasShieldPermissions
             'edit' => Pages\EditTaskStatus::route('/{record}/edit'),
         ];
     }
-
 
     public static function getPermissionPrefixes(): array
     {
@@ -111,5 +166,3 @@ class TaskStatusResource extends Resource implements HasShieldPermissions
         return Filament::getTenant()->board_name ?? 'კანბანი';
     }
 }
-
-

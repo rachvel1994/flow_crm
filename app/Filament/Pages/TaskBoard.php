@@ -58,50 +58,72 @@ class TaskBoard extends KanbanBoard
         return Task::ordered()->get();
     }
 
-    public function onStatusChanged(int|string $recordId, string $status, array $fromOrderedIds, array $toOrderedIds): void
+    public function onStatusChanged(int|string $recordId, string $newStatusId, array $fromOrderedIds, array $toOrderedIds): void
     {
-        $task = Task::with('steps')->findOrFail($recordId);
+        $task = Task::with(['steps', 'status'])->findOrFail($recordId);
 
-        $steps = $task->steps;
+        $currentStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles'])->findOrFail($task->status_id);
+        $newStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles'])->findOrFail($newStatusId);
 
-        $allStepsCompleted = $steps->every(fn($step) => (int)$step->is_completed === 1);
+        if (!$this->canMoveTask($task, $currentStatus, $newStatus)) {
+            return;
+        }
 
-        if (!$allStepsCompleted) {
+        $task->update(['status_id' => $newStatusId]);
+        Task::setNewOrder($toOrderedIds);
+    }
+
+    public function onSortChanged(int|string $recordId, string $statusId, array $orderedIds): void
+    {
+        Task::setNewOrder($orderedIds);
+    }
+
+    private function canMoveTask(Task $task, TaskStatus $currentStatus, TaskStatus $newStatus): bool
+    {
+        $user = auth()->user();
+        $userRoleIds = $user->roles->pluck('id')->toArray();
+
+        if (!$task->steps->every(fn($step) => (int) $step->is_completed === 1)) {
             Notification::make()
                 ->title('გთხოვთ, ყველა ნაბიჯი შესრულდეს ეტაპის შესაცვლელად.')
                 ->danger()
                 ->send();
-            return;
+            return false;
+        }
+        $isMovingForward = $newStatus->order_column > $currentStatus->order_column;
+        $isMovingBackward = $newStatus->order_column < $currentStatus->order_column;
+        $currentStatus->refresh();
+
+        if ($isMovingBackward) {
+            $allowedFromCurrent = $currentStatus->canMoveBackRoles()
+                ->whereIn('role_id', $userRoleIds)
+                ->exists();
+
+            if (!($allowedFromCurrent)) {
+                Notification::make()
+                    ->danger()
+                    ->title('უკან დაბრუნება შეზღუდულია.')
+                    ->send();
+                return false;
+            }
+        } elseif ($isMovingForward) {
+            $allowedFromCurrent = $currentStatus->onlyAdminMoveRoles()
+                ->whereIn('role_id', $userRoleIds)
+                ->exists();
+
+            if (!($allowedFromCurrent)) {
+                Notification::make()
+                    ->danger()
+                    ->title('წინ გადაადგილება შეზღუდულია.')
+                    ->send();
+                return false;
+            }
         }
 
-        if (!panel_user('can_move_task_user')) {
-            Notification::make()
-                ->danger()
-                ->title('სვეტი ჩაკეტილია, თქვენ არ გაქვთ სვეტის გადატანის უფლება')
-                ->send();
-            return;
-        }
-
-        $task->update(['status_id' => $status]);
-        Task::setNewOrder($toOrderedIds);
+        return true;
     }
 
-    public function onSortChanged(int|string $recordId, string $status, array $orderedIds): void
-    {
-        $currentStatus = Task::query()->firstWhere('status_id', $status);
-        $newStatus = Task::query()->firstWhere('status_id', $status);
 
-        if ($newStatus->order_column < $currentStatus->order_column) {
-            Notification::make()
-                ->danger()
-                ->title('უკან დაბრუნება შეუძლებელია')
-                ->send();
-            return;
-        }
-
-        Task::setNewOrder($orderedIds);
-
-    }
 
     protected function getHeaderActions(): array
     {
@@ -122,6 +144,9 @@ class TaskBoard extends KanbanBoard
                             Select::make('status_id')
                                 ->label('ეტაპი')
                                 ->relationship('status', 'name')
+                                ->default(function () {
+                                    return TaskStatus::where('team_id', Filament::getTenant()->id)->orderBy('id')->value('id');
+                                })
                                 ->required(),
                             Select::make('priority')
                                 ->label('პრიორიტეტი')

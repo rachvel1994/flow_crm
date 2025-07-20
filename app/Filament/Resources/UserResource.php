@@ -53,17 +53,26 @@ class UserResource extends Resource implements HasShieldPermissions
             Tabs::make('Tabs')
                 ->tabs([
                     Tabs\Tab::make('მთავარი')->schema([
-                        Grid::make(3)->schema([
+                        Grid::make(4)->schema([
                             TextInput::make('name')->label('სახელი')
                                 ->required(),
                             TextInput::make('surname')->label('გვარი')
                                 ->required(),
+                            Select::make('type_id')
+                                ->label('კონტაქტის ტიპი')
+                                ->preload()
+                                ->searchable()
+                                ->relationship('user_type', 'name')
+                                ->required(),
                             Select::make('role_id')
                                 ->label('როლი')
                                 ->preload()
+                                ->searchable()
                                 ->multiple()
                                 ->relationship('roles', 'name')
                                 ->required(),
+                        ]),
+                        Grid::make(3)->schema([
                             DatePicker::make('birthdate')
                                 ->label('დაბადების თარიღი')
                                 ->required(),
@@ -89,7 +98,6 @@ class UserResource extends Resource implements HasShieldPermissions
                                 ->label(__('filament-panels::pages/auth/register.form.password.label'))
                                 ->password()
                                 ->revealable(filament()->arePasswordsRevealable())
-                                ->required(fn($record) => !$record)
                                 ->rule(Password::default())
                                 ->dehydrated(fn($state) => filled($state))
                                 ->dehydrateStateUsing(fn($state) => Hash::make($state))
@@ -99,7 +107,6 @@ class UserResource extends Resource implements HasShieldPermissions
                                 ->label(__('filament-panels::pages/auth/register.form.password_confirmation.label'))
                                 ->password()
                                 ->revealable(filament()->arePasswordsRevealable())
-                                ->required(fn($record) => !$record)
                                 ->dehydrated(false),
                         ])
                             ->visible(panel_user('can_access_panel_user')),
@@ -337,16 +344,14 @@ class UserResource extends Resource implements HasShieldPermissions
     }
 
 
-    public
-    static function getRelations(): array
+    public static function getRelations(): array
     {
         return [
             // Define relations if needed (e.g., HasMany phones, etc.)
         ];
     }
 
-    public
-    static function getPages(): array
+    public static function getPages(): array
     {
         return [
             'index' => Pages\ListUsers::route('/'),
@@ -355,8 +360,7 @@ class UserResource extends Resource implements HasShieldPermissions
         ];
     }
 
-    public
-    static function getPermissionPrefixes(): array
+    public static function getPermissionPrefixes(): array
     {
         return [
             'view_any',
@@ -369,8 +373,7 @@ class UserResource extends Resource implements HasShieldPermissions
         ];
     }
 
-    public
-    static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): ?string
     {
         return 'კონტაქტები';
     }
