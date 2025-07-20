@@ -212,6 +212,7 @@ class TaskBoard extends KanbanBoard
                                     1 => 'დიახ',
                                     0 => 'არა',
                                 ])
+                                ->default(0)
                                 ->required(),
                         ])
                         ->minItems(0)
@@ -245,6 +246,7 @@ class TaskBoard extends KanbanBoard
                             1 => 'დიახ',
                             0 => 'არა',
                         ])
+                        ->default(0)
                         ->required(),
                 ])
                 ->addActionLabel('ნაბიჯის დამატება')
