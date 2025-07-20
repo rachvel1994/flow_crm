@@ -20,6 +20,7 @@ use Filament\Support\Enums\MaxWidth;
 use Illuminate\Contracts\Support\Htmlable;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
 
 class TaskBoard extends KanbanBoard
@@ -43,13 +44,25 @@ class TaskBoard extends KanbanBoard
 
     protected function statuses(): Collection
     {
+        $user = Auth::user();
+
+        $userRoleIds = $user?->roles->pluck('id')->toArray() ?? [];
+
         return TaskStatus::where('is_active', 1)
+            ->with('visibleRoles:id') // eager-load only needed field
             ->get(['id', 'name', 'color'])
-            ->map(fn($status) => [
-                'id' => $status->id,
-                'title' => $status->name,
-                'color' => $status->color,
-            ])
+            ->map(function ($status) use ($userRoleIds) {
+                $isVisible = $status->visibleRoles()
+                    ->whereIn('role_id', $userRoleIds)
+                    ->exists();
+
+                return [
+                    'id' => $status->id,
+                    'title' => $status->name,
+                    'color' => $status->color,
+                    'visible' => $isVisible ? 'flex' : 'none',
+                ];
+            })
             ->values();
     }
 
