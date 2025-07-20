@@ -12,7 +12,9 @@ class CreateUser extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['password'] = generateSecurePassword();
+        if (empty($data['password'])){
+            $data['password'] = generateSecurePassword();
+        }
         return $data;
     }
 }

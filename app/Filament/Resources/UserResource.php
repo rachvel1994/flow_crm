@@ -20,6 +20,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\SpatieTagsColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\BulkAction;
@@ -186,6 +187,12 @@ class UserResource extends Resource implements HasShieldPermissions
     {
         return $table
             ->columns([
+                ImageColumn::make('image')
+                    ->circular()
+                    ->limit(1)
+                    ->size(70)
+                    ->default(asset('default.jpeg'))
+                    ->label('ლოგო'),
                 TextColumn::make('name')
                     ->label('სახელი')
                     ->searchable()
