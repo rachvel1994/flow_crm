@@ -15,15 +15,15 @@ class MassMessageMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $title;
-    public string $message;
+    public string $msg;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($title, $message)
+    public function __construct($title, $msg)
     {
         $this->title = $title;
-        $this->message = $message;
+        $this->msg = $msg;
     }
 
     /**

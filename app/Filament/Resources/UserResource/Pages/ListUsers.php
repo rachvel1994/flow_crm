@@ -26,6 +26,7 @@ class ListUsers extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+
             Action::make('sendSms')
                 ->label('SMS გაგზავნა')
                 ->icon('heroicon-o-chat-bubble-left')
@@ -49,10 +50,14 @@ class ListUsers extends ListRecords
                         ->multiple()
                         ->preload()
                         ->options(function () {
-                            return User::all()
+                            return User::with('phones')
+                                ->get()
                                 ->filter(fn($user) => filled($user->phones))
                                 ->mapWithKeys(fn($user) => [
-                                    $user->id => collect($user->phones)->pluck('phone')->join(', '),
+                                    $user->id => collect($user->phones)
+                                        ->pluck('phone')
+                                        ->filter()
+                                        ->join(', ') ?: "{$user->name} {$user->surname}",
                                 ]);
                         })
                         ->searchable(),
@@ -62,7 +67,7 @@ class ListUsers extends ListRecords
                         ->multiple()
                         ->searchable()
                         ->preload()
-                        ->relationship('roles', 'name')
+                        ->relationship('roles', 'name'),
                 ])
                 ->action(function (array $data) {
                     $manualUsers = User::with('phones')
@@ -72,12 +77,11 @@ class ListUsers extends ListRecords
                     $roleUsers = collect();
                     if (!empty($data['roles'])) {
                         $roleUsers = User::with('phones')
-                            ->whereIn('role', $data['roles'])
+                            ->whereHas('roles', fn($q) => $q->whereIn('name', $data['roles']))
                             ->get();
                     }
 
                     $allPhones = collect();
-
                     collect([$manualUsers, $roleUsers])
                         ->flatten()
                         ->each(function ($user) use (&$allPhones) {
@@ -90,11 +94,11 @@ class ListUsers extends ListRecords
                         });
 
                     foreach ($allPhones as $entry) {
-                        sms(
-                            number: $entry['number'],
-                            message: $data['message'],
-                            sender: $data['sender'],
-                        );
+                        // send_sms(
+                        //     number: $entry['number'],
+                        //     message: $data['message'],
+                        //     sender: $data['sender'],
+                        // );
                     }
 
                     Notification::make()
@@ -104,6 +108,7 @@ class ListUsers extends ListRecords
                 })
                 ->modalHeading('SMS გაგზავნა')
                 ->modalSubmitActionLabel('გაგზავნა'),
+
             Action::make('sendMail')
                 ->label('ელ. ფოსტით დაგზავნა')
                 ->icon('heroicon-m-envelope')
@@ -127,28 +132,30 @@ class ListUsers extends ListRecords
                         ->multiple()
                         ->searchable()
                         ->preload()
-                        ->relationship('roles', 'name')
+                        ->relationship('roles', 'name'),
                 ])
                 ->action(function (array $data) {
-
-                    $contactEmails = \App\Models\User::query()
-                        ->when($data['contacts'], fn($q) => $q->whereIn('id', $data['contacts']))
+                    $contactEmails = User::query()
+                        ->when(!empty($data['contacts']), fn($q) => $q->whereIn('id', $data['contacts']))
                         ->pluck('email')
                         ->toArray();
 
-                    $roleEmails = User::query()
-                        ->when($data['roles'], fn($q) => $q->whereIn('role', $data['roles']))
-                        ->pluck('email')
-                        ->toArray();
+                    $roleEmails = [];
+                    if (!empty($data['roles'])) {
+                        $roleEmails = User::whereHas('roles', fn($q) =>
+                        $q->whereIn('name', $data['roles'])
+                        )->pluck('email')->toArray();
+                    }
 
                     $recipients = collect([...$contactEmails, ...$roleEmails])
                         ->filter()
                         ->unique()
                         ->values();
+
                     foreach ($recipients as $email) {
-                        Mail::to($email)->send(new MassMessageMail(
+                        Mail::to($email)->send(new \App\Mail\MassMessageMail(
                             title: $data['title'],
-                            message: $data['message']
+                            msg: $data['message']
                         ));
                     }
 
@@ -156,8 +163,9 @@ class ListUsers extends ListRecords
                         ->title('ელ. ფოსტები გაიგზავნა')
                         ->success()
                         ->send();
-                })
+                }),
         ];
+
     }
 
     public function getTabs(): array

@@ -66,7 +66,7 @@ class User extends Authenticate implements FilamentUser, HasTenants
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return auth()->user()->can('can_access_panel_user');
     }
 
 

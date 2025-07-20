@@ -308,9 +308,15 @@ class UserResource extends Resource implements HasShieldPermissions
                         );
                     }),
 
+                SelectFilter::make('type_id')
+                    ->label('კონტაქტის ტიპი')
+                    ->multiple()
+                    ->preload()
+                    ->relationship('user_type', 'name')
+                    ->searchable(),
 
                 SelectFilter::make('roles')
-                    ->label('კონტაქტის ტიპი')
+                    ->label('როლები')
                     ->multiple()
                     ->preload()
                     ->searchable()
@@ -369,7 +375,6 @@ class UserResource extends Resource implements HasShieldPermissions
             'delete',
             'delete_any',
             'can_access_panel',
-            'can_move_task',
         ];
     }
 
