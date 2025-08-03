@@ -4,17 +4,20 @@ namespace App\Filament\Pages;
 
 use App\Models\Task;
 use App\Models\TaskStatus;
+use App\Models\User;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\CreateAction;
 use Filament\Facades\Filament;
+use App\Forms\Components\PriceInput;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Contracts\Support\Htmlable;
@@ -33,7 +36,11 @@ class TaskBoard extends KanbanBoard
     protected static ?int $navigationSort = 1;
 
     protected string $editModalTitle = 'დავალება';
-    protected string $editModalWidth = '4xl';
+
+    protected string $editModalSaveButtonLabel = 'დამატება';
+
+    protected string $editModalCancelButtonLabel = 'გაუქმება';
+    protected string $editModalWidth = '7xl';
 
     public bool $disableEditModal = false;
 
@@ -49,7 +56,8 @@ class TaskBoard extends KanbanBoard
         $userRoleIds = $user?->roles->pluck('id')->toArray() ?? [];
 
         return TaskStatus::where('is_active', 1)
-            ->with('visibleRoles:id') // eager-load only needed field
+            ->orderBy('id', 'asc')
+            ->with('visibleRoles:id')
             ->get(['id', 'name', 'color'])
             ->map(function ($status) use ($userRoleIds) {
                 $isVisible = $status->visibleRoles()
@@ -75,8 +83,8 @@ class TaskBoard extends KanbanBoard
     {
         $task = Task::with(['steps', 'status'])->findOrFail($recordId);
 
-        $currentStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles'])->findOrFail($task->status_id);
-        $newStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles'])->findOrFail($newStatusId);
+        $currentStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles', 'canAddTaskByRole'])->findOrFail($task->status_id);
+        $newStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles', 'canAddTaskByRole'])->findOrFail($newStatusId);
 
         if (!$this->canMoveTask($task, $currentStatus, $newStatus)) {
             return;
@@ -96,7 +104,7 @@ class TaskBoard extends KanbanBoard
         $user = auth()->user();
         $userRoleIds = $user->roles->pluck('id')->toArray();
 
-        if (!$task->steps->every(fn($step) => (int) $step->is_completed === 1)) {
+        if (!$task->steps->every(fn($step) => (int)$step->is_completed === 1)) {
             Notification::make()
                 ->title('გთხოვთ, ყველა ნაბიჯი შესრულდეს ეტაპის შესაცვლელად.')
                 ->danger()
@@ -133,13 +141,15 @@ class TaskBoard extends KanbanBoard
             }
         }
 
+
         return true;
     }
 
 
-
     protected function getHeaderActions(): array
     {
+
+
         return [
             CreateAction::make()
                 ->model(Task::class)
@@ -151,14 +161,38 @@ class TaskBoard extends KanbanBoard
                                 ->label('დასახელება')
                                 ->required()
                                 ->maxLength(255),
+                            PriceInput::make('price')
+                                ->label('ფასი'),
                             Hidden::make('code'),
-                            Hidden::make('created_by_id')
-                                ->default(fn() => auth()->id()),
+                            Select::make('created_by_id')
+                                ->label('დავალება დაამატა')
+                                ->searchable()
+                                ->options(
+                                    User::all()
+                                        ->pluck('full_name', 'id')
+                                        ->toArray()
+                                )
+                                ->required(),
+                        ]),
+                    Grid::make()
+                        ->schema([
+
                             Select::make('status_id')
                                 ->label('ეტაპი')
-                                ->relationship('status', 'name')
+                                ->options(function () {
+                                    $user = auth()->user();
+                                    $userRoleIds = $user->roles->pluck('id')->toArray();
+
+                                    return TaskStatus::where('team_id', Filament::getTenant()->id)
+                                        ->whereHas('canAddTaskByRole', function ($query) use ($userRoleIds) {
+                                            $query->whereIn('roles.id', $userRoleIds);
+                                        })
+                                        ->pluck('name', 'id');
+                                })
                                 ->default(function () {
-                                    return TaskStatus::where('team_id', Filament::getTenant()->id)->orderBy('id')->value('id');
+                                    return TaskStatus::where('team_id', Filament::getTenant()->id)
+                                        ->orderBy('id')
+                                        ->value('id');
                                 })
                                 ->required(),
                             Select::make('priority')
@@ -170,10 +204,13 @@ class TaskBoard extends KanbanBoard
                                 ->required(),
                         ]),
 
+                    TextInput::make('location')
+                        ->label('ლოკაცია')
+                        ->columnSpanFull(),
                     RichEditor::make('description')
                         ->label('დამატებითი ინფორმაცია'),
 
-                    Grid::make(2)
+                    Grid::make()
                         ->schema([
                             DateTimePicker::make('started_at')
                                 ->label('დაწყების დრო')
@@ -206,16 +243,11 @@ class TaskBoard extends KanbanBoard
                                 ->label('ნაბიჯის დასახელება')
                                 ->required(),
 
-                            Select::make('is_completed')
+                            Toggle::make('is_completed')
                                 ->label('შესრულებულია')
-                                ->options([
-                                    1 => 'დიახ',
-                                    0 => 'არა',
-                                ])
-                                ->default(0)
-                                ->required(),
+                                ->default(0),
                         ])
-                        ->minItems(0)
+                        ->defaultItems(0)
                         ->addActionLabel('ნაბიჯის დამატება')
                         ->columns(2),
 
@@ -224,8 +256,41 @@ class TaskBoard extends KanbanBoard
                         ->multiple()
                         ->relationship('assignees', 'name')
                         ->preload()
-                        ->searchable(),
-                ]),
+                        ->searchable()
+                        ->createOptionForm([
+                            TextInput::make('name')
+                                ->label('სახელი')
+                                ->required(),
+                            TextInput::make('surname')
+                                ->label('გვარი')
+                                ->required(),
+                            TextInput::make('mobile')
+                                ->label('ტელეფონი'),
+                            TextInput::make('email')
+                                ->label('ელ. ფოსტა'),
+                            Select::make('type_id')
+                                ->label('კონტაქტის ტიპი')
+                                ->searchable()
+                                ->preload()
+                                ->relationship('user_type', 'name')
+                                ->required(),
+                            Select::make('role_id')
+                                ->multiple()
+                                ->preload()
+                                ->searchable()
+                                ->label('კონტაქტის ჯგუფი')
+                                ->relationship('roles', 'name')
+                                ->required(),
+                        ])
+                        ->createOptionAction(function (Action $action) {
+                            return $action->modalHeading('ახალი კონტაქტის დამატება');
+                        }),
+                ])
+                ->action(function (array $data, $livewire) {
+                    $task = Task::create($data);
+
+                    $livewire->dispatch('notify-sound');
+                }),
         ];
 
     }
@@ -240,28 +305,33 @@ class TaskBoard extends KanbanBoard
                     TextInput::make('title')
                         ->label('ნაბიჯის დასახელება')
                         ->required(),
-                    Select::make('is_completed')
+                    Toggle::make('is_completed')
                         ->label('შესრულებულია')
-                        ->options([
-                            1 => 'დიახ',
-                            0 => 'არა',
-                        ])
-                        ->default(0)
-                        ->required(),
+                        ->default(0),
                 ])
                 ->addActionLabel('ნაბიჯის დამატება')
                 ->minItems(0)
                 ->columns(2),
 
-            Grid::make(3)
+            Grid::make(5)
                 ->schema([
                     TextInput::make('title')
                         ->label('დასახელება')
                         ->required()
                         ->maxLength(255),
                     Hidden::make('code'),
-                    Hidden::make('created_by_id')
-                        ->default(fn() => auth()->id()),
+                    PriceInput::make('price')
+                        ->label('ფასი'),
+                    Select::make('created_by_id')
+                        ->label('დავალება დაამატა')
+                        ->disabled()
+                        ->searchable()
+                        ->options(
+                            User::all()
+                                ->pluck('full_name', 'id')
+                                ->toArray()
+                        )
+                        ->required(),
                     Select::make('status_id')
                         ->label('ეტაპი')
                         ->relationship('status', 'name')
@@ -274,6 +344,10 @@ class TaskBoard extends KanbanBoard
                         ->default('medium')
                         ->required(),
                 ]),
+
+            TextInput::make('location')
+                ->label('ლოკაცია')
+                ->columnSpanFull(),
 
             RichEditor::make('description')
                 ->label('დამატებითი ინფორმაცია'),
@@ -299,6 +373,7 @@ class TaskBoard extends KanbanBoard
                     FileUpload::make('images')
                         ->label('სურათები')
                         ->image()
+                        ->openable()
                         ->multiple()
                         ->directory('tasks/images')
                         ->previewable(),
@@ -314,20 +389,17 @@ class TaskBoard extends KanbanBoard
     }
 
 
-    public
-    function getTitle(): string|Htmlable
+    public function getTitle(): string|Htmlable
     {
         return Filament::getTenant()->board_name ?? 'კანბანი';
     }
 
-    public
-    static function getNavigationLabel(): string
+    public static function getNavigationLabel(): string
     {
         return Filament::getTenant()->board_name ?? 'კანბანი';
     }
 
-    public
-    static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): ?string
     {
         return Filament::getTenant()->board_name ?? 'კანბანი';
     }

@@ -1,4 +1,4 @@
-<div
+<div wire:poll
     id="{{ $record->getKey() }}"
     wire:click="recordClicked('{{ $record->getKey() }}', {{ @json_encode($record) }})"
     class="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-2xl transition duration-300 ease-in-out rounded-2xl p-6 cursor-pointer space-y-4"
@@ -35,6 +35,23 @@
         <x-heroicon-o-calendar class="w-4 h-4" />
         {{ $record->started_at?->format('d M Y') ?? $record->created_at->translatedFormat('d M Y') }}
     </div>
+
+	{{-- Step Progress --}}
+@if($record->steps->count() > 0)
+    <div class="space-y-1">
+        <div class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+            <x-heroicon-o-check-circle class="w-4 h-4 text-green-500" />
+            <span>
+                {{ __('ნაბიჯი') }}  {{ $record->steps->where('is_completed', true)->count() }}/{{ $record->steps->count() }}
+            </span>
+        </div>
+        <div class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+            <div class="bg-green-500 h-2 rounded"
+                 style="width: {{ ($record->steps->count() > 0) ? ($record->steps->where('is_completed', true)->count() / $record->steps->count()) * 100 : 0 }}%">
+            </div>
+        </div>
+    </div>
+@endif
 
     {{-- Assignees --}}
     <div class="flex items-center gap-3">

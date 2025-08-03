@@ -15,66 +15,54 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticate;
 use Illuminate\Notifications\Notifiable;
-use Parfaitementweb\FilamentCountryField\Forms\Components\Country;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Tags\HasTags;
 
 class User extends Authenticate implements FilamentUser, HasTenants
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles, HasTags;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
+		'address',
+		'mobile',
         'type_id',
         'password',
         'surname',
         'birthdate',
-        'country',
+        'language',
         'image',
+        'location',
+        'created_by',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'image' => 'array',
+            'birthdate' => 'date',
         ];
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return auth()->user()->can('can_access_panel_user');
-    }
+      //  return $this->can('can_access_panel_user');
 
+		return true;
+    }
 
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class);
     }
-
 
     public function getTenants(Panel $panel): array|Collection
     {
@@ -86,9 +74,9 @@ class User extends Authenticate implements FilamentUser, HasTenants
         return $this->hasMany(UserPhone::class);
     }
 
-    public function addresses(): HasMany
+    public function locations(): HasMany
     {
-        return $this->hasMany(UserAddress::class);
+        return $this->hasMany(UserLocation::class);
     }
 
     public function socialLinks(): HasMany
@@ -101,9 +89,28 @@ class User extends Authenticate implements FilamentUser, HasTenants
         return $this->belongsTo(UserType::class, 'type_id');
     }
 
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function visibleContactTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(UserType::class, 'contact_type_user_permission', 'user_id', 'contact_type_id');
+    }
+
+    public function permittedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'contact_type_user_permission', 'contact_type_id', 'user_id');
+    }
 
     public function canAccessTenant(Model $tenant): bool
     {
         return $this->teams()->whereKey($tenant)->exists();
+    }
+
+	public function getFullNameAttribute(): string
+    {
+        return $this->name . ' ' . $this->surname;
     }
 }

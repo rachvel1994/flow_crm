@@ -83,6 +83,14 @@ class TaskStatusResource extends Resource implements HasShieldPermissions
 
                         return !$record || $record->order_column > $minOrder;
                     }),
+
+                Forms\Components\Select::make('can_add_task_by_role')
+                    ->label('სვეტში დამატების უფლება')
+                    ->multiple()
+                    ->relationship('canAddTaskByRole', 'name')
+                    ->preload()
+                    ->searchable()
+                    ->dehydrated(true),
             ]),
 
             Forms\Components\Textarea::make('message')

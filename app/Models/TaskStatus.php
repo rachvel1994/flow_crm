@@ -41,5 +41,10 @@ class TaskStatus extends Model
     {
         return $this->belongsToMany(\Spatie\Permission\Models\Role::class, 'role_task_status_can_move_back');
     }
+
+    public function canAddTaskByRole(): BelongsToMany
+    {
+        return $this->belongsToMany(\Spatie\Permission\Models\Role::class, 'role_task_status_can_add_task');
+    }
 }
 

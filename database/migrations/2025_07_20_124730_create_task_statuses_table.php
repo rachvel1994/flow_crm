@@ -18,8 +18,8 @@ return new class extends Migration {
             $table->boolean('is_active')->default(true);
             $table->boolean('send_sms')->default(false);
             $table->boolean('send_email')->default(false);
-            $table->unsignedInteger('order_column');
             $table->text('message')->nullable();
+            $table->unsignedInteger('order_column')->nullable();
             $table->timestamps();
             $table->unique(['team_id', 'name']);
         });
@@ -44,6 +44,13 @@ return new class extends Migration {
             $table->foreignId('role_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
+
+        Schema::create('role_task_status_can_add_task', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('task_status_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('role_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -51,9 +58,10 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('task_statuses');
+        Schema::dropIfExists('role_task_status_can_add_task');
         Schema::dropIfExists('role_task_status_visibility');
         Schema::dropIfExists('role_task_status_admin_move');
         Schema::dropIfExists('role_task_status_can_move_back');
+        Schema::dropIfExists('task_statuses');
     }
 };

@@ -15,7 +15,6 @@ class PriceInput extends TextInput
             ->default(0)
             ->postfix('₾')
             ->reactive()
-            ->required()
             ->debounce(300)
             ->numeric()
             ->extraAttributes([

@@ -14,6 +14,8 @@ return new class extends Migration {
             $table->id();
             $table->string('title');
             $table->string('code')->unique();
+			$table->float('price', 2)->default(0);
+            $table->string('location',800)->nullable();
             $table->text('description')->nullable();
             $table->foreignId('created_by_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('team_id')->constrained('teams')->cascadeOnDelete();

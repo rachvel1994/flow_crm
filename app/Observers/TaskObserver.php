@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Task;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 
 class TaskObserver
 {
@@ -12,6 +13,7 @@ class TaskObserver
         $tenant = Filament::getTenant();
 
         if ($tenant) {
+
             $task->team()->associate($tenant);
 
             $lastTask = Task::query()->where('team_id', $tenant->id)

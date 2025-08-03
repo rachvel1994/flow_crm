@@ -3,15 +3,15 @@
 namespace App\Filament\Resources;
 
 use App\Models\User;
-use App\Models\UserAddress;
+use App\Models\UserLocation;
 use App\Models\UserPhone;
 use App\Models\UserSocialLink;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Exception;
 use Filament\Forms;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -21,7 +21,6 @@ use Filament\Forms\Components\Grid;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\ImageColumn;
-use Filament\Tables\Columns\SpatieTagsColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Enums\FiltersLayout;
@@ -32,8 +31,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\UserResource\Pages;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
-use Parfaitementweb\FilamentCountryField\Forms\Components\Country;
-use Parfaitementweb\FilamentCountryField\Tables\Columns\CountryColumn;
+use Filament\Tables\Columns\SpatieTagsColumn;
 
 
 class UserResource extends Resource implements HasShieldPermissions
@@ -48,133 +46,150 @@ class UserResource extends Resource implements HasShieldPermissions
 
     protected static ?int $navigationSort = 3;
 
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'name',
+            'surname',
+            'email',
+            'tags.name',
+        ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+
+        if ($user->hasRole('super_admin')) {
+            return parent::getEloquentQuery();
+        }
+
+        return parent::getEloquentQuery()->whereHas('user_type', function ($query) use ($user) {
+            $query->whereIn('id', $user->visibleContactTypes->pluck('id'));
+        });
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Tabs::make('Tabs')
-                ->tabs([
-                    Tabs\Tab::make('მთავარი')->schema([
-                        Grid::make(4)->schema([
-                            TextInput::make('name')->label('სახელი')
-                                ->required(),
-                            TextInput::make('surname')->label('გვარი')
-                                ->required(),
-                            Select::make('type_id')
-                                ->label('კონტაქტის ტიპი')
-                                ->preload()
-                                ->searchable()
-                                ->relationship('user_type', 'name')
-                                ->required(),
-                            Select::make('role_id')
-                                ->label('როლი')
-                                ->preload()
-                                ->searchable()
-                                ->multiple()
-                                ->relationship('roles', 'name')
-                                ->required(),
-                        ]),
-                        Grid::make(3)->schema([
-                            DatePicker::make('birthdate')
-                                ->label('დაბადების თარიღი')
-                                ->required(),
-                            TextInput::make('email')
-                                ->label('ელ-ფოსტა')
-                                ->unique(ignoreRecord: true)
-                                ->email()
-                                ->required(),
-                            Country::make('country')
-                                ->searchable()
-                                ->label('ეროვნება')
-                                ->required(),
-                        ]),
-                        Select::make('team_id')
-                            ->label('ჯგუფი')
-                            ->preload()
-                            ->multiple()
-                            ->searchable()
-                            ->relationship('teams', 'name')
-                            ->required(),
-                        Grid::make()->schema([
-                            Forms\Components\TextInput::make('password')
-                                ->label(__('filament-panels::pages/auth/register.form.password.label'))
-                                ->password()
-                                ->revealable(filament()->arePasswordsRevealable())
-                                ->rule(Password::default())
-                                ->dehydrated(fn($state) => filled($state))
-                                ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                                ->same('passwordConfirmation')
-                                ->validationAttribute(__('filament-panels::pages/auth/register.form.password.validation_attribute')),
-                            Forms\Components\TextInput::make('passwordConfirmation')
-                                ->label(__('filament-panels::pages/auth/register.form.password_confirmation.label'))
-                                ->password()
-                                ->revealable(filament()->arePasswordsRevealable())
-                                ->dehydrated(false),
-                        ])
-                            ->visible(panel_user('can_access_panel_user')),
-                        Grid::make()->schema([
-                            FileUpload::make('image')
-                                ->label('ლოგო')
-                                ->columns(1)
-                                ->directory('logo')
-                                ->reorderable()
-                                ->imagePreviewHeight(50)
-                                ->panelLayout('compact')
-                                ->downloadable()
-                                ->storeFileNamesIn('original_filename'),
-                            Forms\Components\SpatieTagsInput::make('tags')
-                                ->type('user')
-                                ->label('თეგი'),
-                        ]),
-                    ]),
+            Grid::make(4)->schema([
+                TextInput::make('name')->label('სახელი')
+                    ->required(),
+                TextInput::make('surname')->label('გვარი')
+                    ->required(),
+                Select::make('type_id')
+                    ->label('კონტაქტის ტიპი')
+                    ->preload()
+                    ->searchable()
+                    ->relationship('user_type', 'name')
+                    ->required(),
+                Select::make('role_id')
+                    ->label('როლი')
+                    ->preload()
+                    ->searchable()
+                    ->multiple()
+                    ->relationship('roles', 'name')
+                    ->required(),
 
-                    Tabs\Tab::make('მობილურები')->schema([
-                        Repeater::make('phones')
-                            ->label('ტელეფონის ნომრები')
-                            ->relationship('phones')
-                            ->schema([
-                                TextInput::make('phone')
-                                    ->label('ნომერი')
-                                    ->required(),
-                            ])
-                            ->addActionLabel('ნომრის დამატება')
-                            ->defaultItems(0)
-                            ->columns(1),
+                DatePicker::make('birthdate')
+                    ->label('დაბადების თარიღი')
+                    ->required(),
+                TextInput::make('email')
+                    ->label('ელ-ფოსტა')
+                    ->unique(ignoreRecord: true)
+                    ->email()
+                    ->required(),
+                Select::make('language')
+                    ->searchable()
+                    ->options(languages())
+                    ->label('ენა')
+                    ->required(),
+                Select::make('team_id')
+                    ->label('ჯგუფი')
+                    ->preload()
+                    ->multiple()
+                    ->searchable()
+                    ->relationship('teams', 'name')
+                    ->required(),
+            ]),
 
-                    ]),
+            Grid::make()->schema([
+                TextInput::make('mobile')->label('მობილური')
+                    ->required(),
+                TextInput::make('address')->label('მისამართი')
+                    ->required(),
+            ]),
 
-                    Tabs\Tab::make('მისამართები')->schema([
-                        Repeater::make('addresses')
-                            ->label('მისამართები')
-                            ->relationship('addresses')
-                            ->schema([
-                                TextInput::make('address')->label('მისამართი')->required(),
-                            ])
-                            ->addActionLabel('მისამართის დამატება')
-                            ->defaultItems(0)
-                            ->columns(1),
+            Grid::make()->schema([
+                Forms\Components\TextInput::make('password')
+                    ->label(__('filament-panels::pages/auth/register.form.password.label'))
+                    ->password()
+                    ->revealable(filament()->arePasswordsRevealable())
+                    ->rule(Password::default())
+                    ->dehydrated(fn($state) => filled($state))
+                    ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                    ->same('passwordConfirmation')
+                    ->validationAttribute(__('filament-panels::pages/auth/register.form.password.validation_attribute')),
+                Forms\Components\TextInput::make('passwordConfirmation')
+                    ->label(__('filament-panels::pages/auth/register.form.password_confirmation.label'))
+                    ->password()
+                    ->revealable(filament()->arePasswordsRevealable())
+                    ->dehydrated(false),
+            ]),
+//                ->visible(fn() => auth()->user()?->can('can_access_panel_user') ?? false),
+            Grid::make()->schema([
+                FileUpload::make('image')
+                    ->label('სურათი')
+                    ->columns(1)
+                    ->directory('images')
+                    ->reorderable()
+                    ->imagePreviewHeight(50)
+                    ->panelLayout('compact')
+                    ->downloadable()
+                    ->storeFileNamesIn('original_filename'),
+                Forms\Components\SpatieTagsInput::make('tags')
+                    ->type('user')
+                    ->label('თეგი'),
+            ]),
 
-                    ]),
+            Repeater::make('phones')
+                ->label('ტელეფონის ნომრები')
+                ->relationship('phones')
+                ->schema([
+                    TextInput::make('phone')
+                        ->label('ნომერი')
+                        ->required(),
+                ])
+                ->addActionLabel('ნომრის დამატება')
+                ->defaultItems(0)
+                ->columns(1),
 
-                    Tabs\Tab::make('სოციალური ბმულები')->schema([
-                        Repeater::make('socialLinks')
-                            ->label('სოციალური ბმულები')
-                            ->relationship('socialLinks')
-                            ->schema([
-                                Select::make('label')
-                                    ->label('დასახელება')
-                                    ->searchable()
-                                    ->options(socials())
-                                    ->required(),
-                                TextInput::make('url')
-                                    ->label('ლინკი')
-                                    ->url()
-                                    ->required(),
-                            ])
-                            ->addActionLabel('ბმულის დამატება')
-                            ->defaultItems(0)
-                            ->columns(2),
-                    ]),
-                ])->columnSpanFull(),
+            Repeater::make('socialLinks')
+                ->label('სოციალური ბმულები')
+                ->relationship('socialLinks')
+                ->schema([
+                    Select::make('label')
+                        ->label('დასახელება')
+                        ->searchable()
+                        ->options(fn() => socials())
+                        ->required(),
+                    TextInput::make('url')
+                        ->label('ლინკი')
+                        ->required(),
+                ])
+                ->addActionLabel('ბმულის დამატება')
+                ->defaultItems(0)
+                ->columns(2),
+
+            Repeater::make('location')
+                ->label('ლოკაცია')
+                ->relationship('locations')
+                ->schema([
+                    TextInput::make('location')->label('ლოკაცია')->required(),
+                ])
+                ->addActionLabel('ლოკაციის დამატება')
+                ->defaultItems(0)
+                ->columns(1),
         ]);
     }
 
@@ -182,8 +197,7 @@ class UserResource extends Resource implements HasShieldPermissions
     /**
      * @throws Exception
      */
-    public
-    static function table(Table $table): Table
+    public static function table(Table $table): Table
     {
         return $table
             ->columns([
@@ -192,7 +206,7 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->limit(1)
                     ->size(70)
                     ->default(asset('default.jpeg'))
-                    ->label('ლოგო'),
+                    ->label('სურათი'),
                 TextColumn::make('name')
                     ->label('სახელი')
                     ->searchable()
@@ -205,31 +219,76 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->label('ელ-ფოსტა')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('mobile')
+                    ->label('მობილური')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('phones.phone')
                     ->label('ტელეფონის ნომერი')
+                    ->searchable()
+                    ->formatStateUsing(fn($state, $record) => $record->phones->first()?->phone ?? '-')
+                    ->tooltip(fn($record) => $record->phones->pluck('phone')->implode(', ') ?: null
+                    )
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('birthdate')
                     ->label('დაბადების თარიღი')
                     ->date()
                     ->toggleable(isToggledHiddenByDefault: false),
-                CountryColumn::make('country')
-                    ->label('ეროვნება')
+                TextColumn::make('language')
+                    ->label('ენა')
+                    ->formatStateUsing(fn(string $state): string => languages($state) ?? $state)
                     ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('addresses.address')
-                    ->label('მისამართი')
+                TextColumn::make('locations.location')
+                    ->label('ლოკაცია')
+                    ->formatStateUsing(fn($state, $record) => $record->locations->first()?->location ?? '-')
+                    ->tooltip(fn($record) => $record->locations->pluck('location')->implode(', ') ?: null
+                    )
                     ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('creator.name')
+                    ->label('დაამატა')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('roles.name')
                     ->label('როლი')
+                    ->searchable()
                     ->badge()
                     ->color('primary')
                     ->separator(', ')
                     ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('socialLinks.label')
+                TextColumn::make('socialLinks')
                     ->label('სოც. ბმული')
+                    ->html()
+                    ->formatStateUsing(function ($state, $record) {
+                        return $record->socialLinks
+                            ->map(function ($link) {
+                                $url = $link->url;
+                                // Add logic for WhatsApp and Viber links
+                                if (strtolower($link->label) === 'whatsapp') {
+                                    // Assuming the 'url' field contains the phone number
+                                    $url = 'https://wa.me/' . preg_replace('/[^0-9]/', '', $link->url);
+                                } elseif (strtolower($link->label) === 'viber') {
+                                    // Assuming the 'url' field contains the phone number
+                                    $url = 'viber://chat?number=' . preg_replace('/[^0-9]/', '', $link->url);
+                                }
+
+                                return '<a href="' . e($url) . '" target="_blank" class="inline-block px-2 py-1 text-sm rounded-full bg-primary-100 text-primary-800 dark:bg-primary-800 dark:text-primary-100 mr-1 mb-1">'
+                                    . e($link->label)
+                                    . '</a>';
+                            })
+                            ->implode(' ');
+                    })
                     ->toggleable(isToggledHiddenByDefault: false),
                 SpatieTagsColumn::make('tags')
                     ->label('თეგები')
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('tags', function ($q) use ($search) {
+                            $locale = app()->getLocale();
+                            $q->where("name->{$locale}", 'like', "%{$search}%");
+                        });
+                    }),
+                TextColumn::make('address')
+                    ->label('მისამართი')
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('created_at')
                     ->label('დამატებულია')
@@ -269,6 +328,11 @@ class UserResource extends Resource implements HasShieldPermissions
                     ])
                     ->query(fn($query, $data) => $query->when($data['birthdate'], fn($q, $value) => $q->whereDate('birthdate', $value))),
 
+                SelectFilter::make('created_by')
+                    ->label('დაამატა მომხმარებლი')
+                    ->options(User::all()->pluck('name', 'id'))
+                    ->query(fn($query, $data) => $query->when($data['value'], fn($q, $value) => $q->where('created_by', $value))),
+
                 SelectFilter::make('social_links')
                     ->label('სოც. ბმული')
                     ->multiple()
@@ -299,18 +363,18 @@ class UserResource extends Resource implements HasShieldPermissions
                         );
                     }),
 
-                SelectFilter::make('addresses')
-                    ->label('მისამართი')
+                SelectFilter::make('locations')
+                    ->label('ლოკაცია')
                     ->multiple()
                     ->preload()
                     ->searchable()
                     ->options(function () {
-                        return UserAddress::query()->distinct('address')->pluck('address', 'address')->toArray();
+                        return UserLocation::query()->distinct('location')->pluck('location', 'location')->toArray();
                     })
                     ->query(function ($query, $data) {
                         $values = $data['values'] ?? [];
 
-                        return $query->when(!empty($values), fn($q) => $q->whereHas('addresses', fn($q) => $q->whereIn('address', $values)
+                        return $query->when(!empty($values), fn($q) => $q->whereHas('locations', fn($q) => $q->whereIn('location', $values)
                         )
                         );
                     }),
@@ -329,17 +393,13 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->searchable()
                     ->relationship('roles', 'name'),
 
-                Filter::make('country')
-                    ->form([
-                        Country::make('country')->label('ეროვნება'),
-                    ])
-                    ->query(function ($query, array $data) {
-                        return $query->when(
-                            $data['country'],
-                            fn($q, $value) => $q->where('country', $value)
-                        );
-                    }),
-                SelectFilter::make('tags.name')
+                SelectFilter::make('language')
+                    ->label('ენა')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->options(languages()),
+                SelectFilter::make('tags')
                     ->label('თეგები')
                     ->preload()
                     ->searchable()
@@ -348,6 +408,7 @@ class UserResource extends Resource implements HasShieldPermissions
             ], FiltersLayout::AboveContentCollapsible)
             ->actions([
                 EditAction::make(),
+                DeleteAction::make()
             ])
             ->bulkActions([
                 DeleteBulkAction::make(),
@@ -360,7 +421,7 @@ class UserResource extends Resource implements HasShieldPermissions
     public static function getRelations(): array
     {
         return [
-            // Define relations if needed (e.g., HasMany phones, etc.)
+            // No explicit relations needed here for `Spatie\Tags` via `HasTags` trait.
         ];
     }
 
@@ -373,6 +434,12 @@ class UserResource extends Resource implements HasShieldPermissions
         ];
     }
 
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'კონტაქტები';
+    }
+
     public static function getPermissionPrefixes(): array
     {
         return [
@@ -381,12 +448,6 @@ class UserResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
-            'can_access_panel',
         ];
-    }
-
-    public static function getNavigationGroup(): ?string
-    {
-        return 'კონტაქტები';
     }
 }

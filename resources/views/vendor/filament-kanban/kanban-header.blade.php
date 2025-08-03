@@ -12,3 +12,4 @@ min-height: 50px;
     {{ $status['title'] }}
     <span class="text-sm">({{ count($status['records']) }})</span>
 </h3>
+<audio id="notification-sound" src="{{ asset('sounds/notification.wav') }}" preload="auto"></audio>

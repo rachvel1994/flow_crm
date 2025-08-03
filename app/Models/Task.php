@@ -16,10 +16,12 @@ class Task extends Model implements Sortable
     protected $fillable = [
         'title',
         'code',
+        'location',
         'description',
         'created_by_id',
         'team_id',
         'status_id',
+		'price',
         'priority',
         'started_at',
         'deadline',

@@ -43,4 +43,14 @@
             onAdd,
         }))
     })
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        window.addEventListener('notify-sound', () => {
+            const audio = document.getElementById('notification-sound');
+            if (audio) {
+                audio.play().catch(e => console.log('Cannot play sound:', e));
+            }
+        });
+    });
 </script>

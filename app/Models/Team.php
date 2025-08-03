@@ -15,9 +15,17 @@ class Team extends Model
     protected $fillable = [
         'name',
         'board_name',
+		'logo',
         'slug',
         'is_active',
     ];
+	
+	protected function casts(): array
+    {
+        return [
+            'logo' => 'array',
+        ];
+    }
 
     public function members(): BelongsToMany
     {

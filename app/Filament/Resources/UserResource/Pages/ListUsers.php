@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
+use App\Exports\UserExport;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Mail\MassMessageMail;
 use App\Models\User;
 use Filament\Actions;
@@ -16,7 +18,7 @@ use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Mail;
 use Mohamedsabil83\FilamentFormsTinyeditor\Components\TinyEditor;
-use Spatie\Permission\Models\Role;
+
 
 class ListUsers extends ListRecords
 {
@@ -26,7 +28,12 @@ class ListUsers extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
-
+			Action::make('export')
+				->label('კონტაქტის ექსპორტი')
+				->icon('heroicon-o-arrow-down-tray')
+				->action(function () {
+					return Excel::download(new UserExport(), 'contacts_export_' . now()->format('Ymd_His') . '.xlsx');
+				}),
             Action::make('sendSms')
                 ->label('SMS გაგზავნა')
                 ->icon('heroicon-o-chat-bubble-left')
@@ -168,20 +175,22 @@ class ListUsers extends ListRecords
 
     }
 
-    public function getTabs(): array
+   public function getTabs(): array
     {
         $tabs = [];
 
+        // Default tab - All users
         $tabs['ყველა'] = Tab::make('ყველა')
-            ->badge(User::query()->count());
+            ->badge(User::count());
 
-        $roles = Role::query()->get();
+        // Load all roles
+        $roles = \Spatie\Permission\Models\Role::all();
 
         foreach ($roles as $role) {
             $tabs[$role->name] = Tab::make($role->name)
-                ->badge($role->users()->count())
+                ->badge(User::role($role->name)->count()) // Count users with that role
                 ->modifyQueryUsing(function ($query) use ($role) {
-                    $query->whereHas('roles', fn($q) => $q->where('name', $role->name));
+                    $query->role($role->name); // Scope from Spatie package
                 });
         }
 

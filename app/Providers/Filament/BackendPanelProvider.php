@@ -12,6 +12,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
+use Filament\Facades\Filament;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -34,6 +35,8 @@ class BackendPanelProvider extends PanelProvider
             ->id('backend')
             ->path('/')
             ->login()
+			->passwordReset()
+			->registration()
             ->tenant(Team::class, slugAttribute: 'slug')
             ->tenantRegistration(RegisterTeam::class)
             ->colors([

@@ -11,10 +11,13 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('surname')->nullable()->after('email');
+            $table->string('mobile')->nullable()->after('email');
+            $table->string('address', 800)->nullable()->after('mobile');
+            $table->string('created_by')->nullable()->after('address');
+            $table->string('surname')->nullable()->after('created_by');
             $table->date('birthdate')->nullable()->after('surname');
-            $table->string('country')->nullable()->after('birthdate');
-            $table->jsonb('image')->nullable()->after('country');
+            $table->string('language')->nullable()->after('birthdate');
+            $table->jsonb('image')->nullable()->after('language');
             $table->foreignId('type_id')->nullable()->after('image');
         });
     }
@@ -27,9 +30,12 @@ return new class extends Migration {
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn([
+                'mobile',
+                'address',
+                'created_by',
                 'surname',
                 'birthdate',
-                'country',
+                'language',
                 'image',
                 'type_id',
             ]);

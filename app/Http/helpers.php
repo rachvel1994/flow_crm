@@ -413,6 +413,27 @@ if (!function_exists('socials')) {
     }
 }
 
+if (!function_exists('languages')) {
+    function languages(?string $key = null): mixed
+    {
+        $languageMap = [
+            'georgian' => 'ქართული',
+            'russian' => 'რუსული',
+            'english' => 'ინგლისური',
+            'german' => 'გერმანული',
+            'turkish' => 'თურქული',
+            'armenian' => 'სომხური',
+            'chinese' => 'ჩინური',
+        ];
+
+        if ($key !== null) {
+            return $languageMap[$key] ?? null;
+        }
+
+        return $languageMap;
+    }
+}
+
 if (!function_exists('panel_user')) {
     function panel_user(string $permission = null): bool
     {
