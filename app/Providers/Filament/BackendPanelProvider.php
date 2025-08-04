@@ -2,7 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Tenancy\EditTeam;
 use App\Filament\Pages\Tenancy\RegisterTeam;
+use App\Http\Middleware\Filament\ApplyFilamentTenantThemeMiddleware;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Http\Middleware\ApplyTenantScopes;
 use App\Models\Team;
@@ -12,7 +14,6 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
-use Filament\Facades\Filament;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -35,10 +36,11 @@ class BackendPanelProvider extends PanelProvider
             ->id('backend')
             ->path('/')
             ->login()
-			->passwordReset()
-			->registration()
+            ->passwordReset()
+            ->registration()
             ->tenant(Team::class, slugAttribute: 'slug')
             ->tenantRegistration(RegisterTeam::class)
+            ->tenantProfile(EditTeam::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -70,6 +72,7 @@ class BackendPanelProvider extends PanelProvider
             ])
             ->tenantMiddleware([
                 ApplyTenantScopes::class,
+                ApplyFilamentTenantThemeMiddleware::class,
             ], isPersistent: true);
     }
 }

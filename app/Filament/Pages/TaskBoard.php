@@ -19,6 +19,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ViewField;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Contracts\Support\Htmlable;
 use Filament\Notifications\Notification;
@@ -43,6 +44,33 @@ class TaskBoard extends KanbanBoard
     protected string $editModalWidth = '7xl';
 
     public bool $disableEditModal = false;
+
+    public ?array $editModalFormState = [
+        'title' => '',
+        'code' => '',
+        'location' => '',
+        'description' => '',
+        'created_by_id' => null,
+        'team_id' => null,
+        'status_id' => null,
+        'price' => null,
+        'priority' => null,
+        'started_at' => null,
+        'deadline' => null,
+        'images' => [],
+        'order_column' => null,
+        'attachments' => [],
+        'assignees' => [],
+    ];
+
+    public function mount(): void
+    {
+        if (session()->has('notifySound')) {
+            $this->dispatch('notify-sound');
+            session()->forget('notifySound');
+        }
+    }
+
 
     public function getMaxContentWidth(): MaxWidth|string|null
     {
@@ -83,19 +111,20 @@ class TaskBoard extends KanbanBoard
     {
         $task = Task::with(['steps', 'status'])->findOrFail($recordId);
 
-        $currentStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles', 'canAddTaskByRole'])->findOrFail($task->status_id);
-        $newStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles', 'canAddTaskByRole'])->findOrFail($newStatusId);
+        $currentStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles', 'canAddTaskByRole', 'smsReceivers'])->findOrFail($task->status_id);
+        $newStatus = TaskStatus::with(['canMoveBackRoles', 'onlyAdminMoveRoles', 'visibleRoles', 'canAddTaskByRole', 'smsReceivers'])->findOrFail($newStatusId);
 
         if (!$this->canMoveTask($task, $currentStatus, $newStatus)) {
             return;
         }
-
+        $this->dispatch('notify-sound-on-change');
         $task->update(['status_id' => $newStatusId]);
         Task::setNewOrder($toOrderedIds);
     }
 
     public function onSortChanged(int|string $recordId, string $statusId, array $orderedIds): void
     {
+        $this->dispatch('notify-sound-on-change');
         Task::setNewOrder($orderedIds);
     }
 
@@ -209,11 +238,11 @@ class TaskBoard extends KanbanBoard
                         ->columnSpanFull(),
                     RichEditor::make('description')
                         ->label('დამატებითი ინფორმაცია'),
-
                     Grid::make()
                         ->schema([
                             DateTimePicker::make('started_at')
                                 ->label('დაწყების დრო')
+                                ->default(now())
                                 ->seconds(false),
 
                             DateTimePicker::make('deadline')
@@ -227,12 +256,14 @@ class TaskBoard extends KanbanBoard
                                 ->multiple()
                                 ->directory('tasks/attachments')
                                 ->previewable()
+                                ->panelLayout('grid')
                                 ->downloadable(),
                             FileUpload::make('images')
                                 ->label('სურათები')
                                 ->image()
                                 ->multiple()
                                 ->directory('tasks/images')
+                                ->panelLayout('grid')
                                 ->previewable(),
                         ]),
                     Repeater::make('steps')
@@ -287,7 +318,7 @@ class TaskBoard extends KanbanBoard
                         }),
                 ])
                 ->action(function (array $data, $livewire) {
-                    $task = Task::create($data);
+                    Task::create($data);
 
                     $livewire->dispatch('notify-sound');
                 }),
@@ -295,6 +326,9 @@ class TaskBoard extends KanbanBoard
 
     }
 
+    /**
+     * @throws \Exception
+     */
     protected function getEditModalFormSchema(string|null|int $recordId): array
     {
         return [
@@ -367,6 +401,7 @@ class TaskBoard extends KanbanBoard
                     FileUpload::make('attachments')
                         ->label('მიმაგრებული ფაილები')
                         ->multiple()
+                        ->panelLayout('grid')
                         ->directory('tasks/attachments')
                         ->previewable()
                         ->downloadable(),
@@ -374,11 +409,16 @@ class TaskBoard extends KanbanBoard
                         ->label('სურათები')
                         ->image()
                         ->openable()
+                        ->panelLayout('grid')
                         ->multiple()
                         ->directory('tasks/images')
                         ->previewable(),
                 ]),
 
+            ViewField::make('logo_preview')
+                ->label('ლოგოს წინასწარი ნახვა')
+                ->view('components.image-modal-thumb')
+                ->visible(fn($record) => filled($record?->images)),
             Select::make('assignees')
                 ->label('დავალებული პირები')
                 ->multiple()

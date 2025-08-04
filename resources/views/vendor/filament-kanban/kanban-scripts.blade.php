@@ -53,4 +53,18 @@
             }
         });
     });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        window.addEventListener('notify-sound-on-change', () => {
+            const audio = document.getElementById('notify-sound-on-change');
+            if (audio) {
+                audio.play().catch(e => console.log('Cannot play sound:', e));
+            }
+        });
+    });
+
+    window.addEventListener('open-edit-task-modal', event => {
+        const taskId = event.detail.taskId;
+        Livewire.dispatch('openEditTaskModal', taskId);
+    });
 </script>

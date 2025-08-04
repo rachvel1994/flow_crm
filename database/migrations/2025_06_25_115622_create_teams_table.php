@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('name')->unique();
             $table->string('board_name');
 			$table->jsonb('logo')->nullable();
+			$table->jsonb('config')->nullable();
             $table->string('slug');
             $table->boolean('is_active')->default(1);
             $table->timestamps();

@@ -46,5 +46,10 @@ class TaskStatus extends Model
     {
         return $this->belongsToMany(\Spatie\Permission\Models\Role::class, 'role_task_status_can_add_task');
     }
+
+    public function smsReceivers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'task_status_sms_receivers');
+    }
 }
 

@@ -91,6 +91,14 @@ class TaskStatusResource extends Resource implements HasShieldPermissions
                     ->preload()
                     ->searchable()
                     ->dehydrated(true),
+
+                Forms\Components\Select::make('task_status_sms_receivers')
+                    ->label('სმს მიმღები')
+                    ->multiple()
+                    ->relationship('smsReceivers', 'name')
+                    ->preload()
+                    ->searchable()
+                    ->dehydrated(true),
             ]),
 
             Forms\Components\Textarea::make('message')

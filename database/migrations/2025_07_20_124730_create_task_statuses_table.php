@@ -51,6 +51,13 @@ return new class extends Migration {
             $table->foreignId('role_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
+
+        Schema::create('task_status_sms_receivers', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('task_status_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -58,6 +65,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::dropIfExists('task_status_sms_receivers');
         Schema::dropIfExists('role_task_status_can_add_task');
         Schema::dropIfExists('role_task_status_visibility');
         Schema::dropIfExists('role_task_status_admin_move');

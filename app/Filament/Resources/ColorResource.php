@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ColorResource\Pages;
 use App\Models\Color;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Exception;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,7 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class ColorResource extends Resource
+class ColorResource extends Resource implements  HasShieldPermissions
 {
     protected static ?string $model = Color::class;
 
@@ -96,5 +97,16 @@ class ColorResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         return 'პროდუქტი';
+    }
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
     }
 }

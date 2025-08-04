@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Tenancy;
 
 use App\Models\Team;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\FileUpload;
@@ -27,15 +28,19 @@ class RegisterTeam extends RegisterTenant
                 TextInput::make('board_name')
                     ->label('კანბანის სახელი')
                     ->required(),
-				 FileUpload::make('logo')
+                FileUpload::make('logo')
                     ->label('ლოგო')
                     ->columns(1)
-                    ->directory('logo')
-                    ->reorderable()
+                    ->image()
                     ->imagePreviewHeight(50)
                     ->panelLayout('compact')
-                    ->downloadable()
-                    ->storeFileNamesIn('original_filename'),
+                    ->downloadable(false)
+                    ->storeFileNamesIn('original_filename')
+                    ->directory('logo'),
+                ColorPicker::make('config.colors.primary')
+                    ->label('ფერი')
+                    ->nullable()
+                    ->hexColor(),
                 Toggle::make('is_active')
                     ->label('აქტიური სტატუსი')
                     ->default(1),

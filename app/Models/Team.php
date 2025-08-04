@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Arr;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
@@ -17,14 +18,29 @@ class Team extends Model
         'board_name',
 		'logo',
         'slug',
+        'config',
         'is_active',
     ];
-	
+
 	protected function casts(): array
     {
         return [
             'logo' => 'array',
+            'config' => 'json',
         ];
+    }
+
+    public function getBrandLogo(): ?string
+    {
+        if ($this->logo) {
+            return asset('storage/' . $this->logo);
+        }
+        return null;
+    }
+
+    public function getPrimaryColorCode()
+    {
+        return Arr::get($this->config, 'colors.primary', '#0099a8'); // Default primary color
     }
 
     public function members(): BelongsToMany

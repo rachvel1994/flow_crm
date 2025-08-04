@@ -7,6 +7,7 @@ use App\Filament\Resources\TaskResource\RelationManagers;
 use App\Forms\Components\PriceInput;
 use App\Models\Task;
 use App\Models\TaskStatus;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Exception;
 use Filament\Facades\Filament;
 use Filament\Forms;
@@ -30,7 +31,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class TaskResource extends Resource
+class TaskResource extends Resource implements  HasShieldPermissions
 {
     protected static ?string $model = Task::class;
 
@@ -293,5 +294,16 @@ class TaskResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         return Filament::getTenant()->board_name ?? 'კანბანი';
+    }
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
     }
 }

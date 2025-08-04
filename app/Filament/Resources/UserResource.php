@@ -60,7 +60,7 @@ class UserResource extends Resource implements HasShieldPermissions
     {
         $user = auth()->user();
 
-        if ($user->hasRole('super_admin')) {
+        if ($user->hasRole('ადმინისტრატორი')) {
             return parent::getEloquentQuery();
         }
 
@@ -111,6 +111,13 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->searchable()
                     ->relationship('teams', 'name')
                     ->required(),
+                Select::make('visibleContactTypes')
+                    ->label('ჯგუფების ნახვის უფლება')
+                    ->preload()
+                    ->multiple()
+                    ->searchable()
+                    ->relationship('visibleContactTypes', 'name')
+                    ->required(),
             ]),
 
             Grid::make()->schema([
@@ -135,8 +142,8 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->password()
                     ->revealable(filament()->arePasswordsRevealable())
                     ->dehydrated(false),
-            ]),
-//                ->visible(fn() => auth()->user()?->can('can_access_panel_user') ?? false),
+            ])
+                ->visible(fn() => auth()->user()?->can('can_access_panel_user') ?? false),
             Grid::make()->schema([
                 FileUpload::make('image')
                     ->label('სურათი')
@@ -448,6 +455,7 @@ class UserResource extends Resource implements HasShieldPermissions
             'update',
             'delete',
             'delete_any',
+            'can_access_panel',
         ];
     }
 }

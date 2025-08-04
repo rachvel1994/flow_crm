@@ -4,12 +4,13 @@ namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
 use App\Exports\UserExport;
+use App\Models\Task;
+use App\Models\TaskStatus;
+use Filament\Facades\Filament;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Mail\MassMessageMail;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Actions\Action;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -28,6 +29,43 @@ class ListUsers extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            Action::make('addTask')
+                ->label('დავალების დამატება')
+                ->icon('heroicon-o-plus')
+                ->modalHeading('დავალების დამატება კონტაქტზე')
+                ->form([
+                    TextInput::make('title')
+                        ->label('დასახელება')
+                        ->required(),
+
+                    Select::make('status_id')
+                        ->label('კანბანის სვეტი (ეტაპი)')
+                        ->options(TaskStatus::pluck('name', 'id'))
+                        ->searchable()
+                        ->required(),
+
+                    Select::make('assignees')
+                        ->label('დავალებული პირები')
+                        ->options(User::pluck('name', 'id'))
+                        ->searchable()
+                        ->multiple()
+                        ->required(),
+                ])
+                ->action(function (array $data, $record, $livewire) {
+                    // დავალების შექმნა
+                    $task = Task::create([
+                        'title' => $data['title'],
+                        'status_id' => $data['status_id'],
+                        'created_by_id' => auth()->id(),
+                    ]);
+
+                    // დავალებულების დამაგრება
+                    $task->assignees()->attach($data['assignees']);
+                    // edit modal-ის გახსნა ახალი დავალებისთვის
+                    session()->flash('notifySound');
+
+                    $this->redirectRoute('filament.backend.pages.task-board', ['tenant' => Filament::getTenant()]);
+                }),
 			Action::make('export')
 				->label('კონტაქტის ექსპორტი')
 				->icon('heroicon-o-arrow-down-tray')
