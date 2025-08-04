@@ -57,9 +57,6 @@ class UserLogger extends Logger
                     ->hasMany('visibleContactTypes'),
                 Field::make('mobile')->label('მობილური'),
                 Field::make('address')->label('მისამართი'),
-                Field::make('image')
-                    ->label('სურათი')
-                    ->media(gallery: false),
                 Field::make('tags.name')
                     ->label('თეგები')
                     ->badge()
