@@ -14,7 +14,7 @@ class TaskStatusLogger extends Logger
 {
     public static ?string $model = TaskStatus::class;
 
-    public static function getLabel(): string | Htmlable | null
+    public static function getLabel(): string|Htmlable|null
     {
         return TaskStatusResource::getModelLabel();
     }
@@ -23,10 +23,19 @@ class TaskStatusLogger extends Logger
     {
         return $logger
             ->fields([
-                //
+                Field::make('name')->label('სვეტის სახელი'),
+                Field::make('color')->label('ფერი'),
+                Field::make('is_active')->label('სტატუსი'),
+                Field::make('send_sms')->label('SMS გაგზავნა'),
+                Field::make('send_email')->label('Email გაგზავნა'),
+                Field::make('message')->label('შეტყობინება'),
             ])
             ->relationManagers([
-                //
+                RelationManager::make('visibleRoles')->label('სვეტის ნახვის უფლება'),
+                RelationManager::make('onlyAdminMoveRoles')->label('წინ გადასვლის უფლება'),
+                RelationManager::make('canMoveBackRoles')->label('უკან დაბრუნების უფლება'),
+                RelationManager::make('canAddTaskByRole')->label('სვეტში დამატების უფლება'),
+                RelationManager::make('smsReceivers')->label('სმს მიმღები'),
             ]);
     }
 }

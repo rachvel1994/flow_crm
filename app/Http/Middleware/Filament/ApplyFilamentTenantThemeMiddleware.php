@@ -28,7 +28,6 @@ class ApplyFilamentTenantThemeMiddleware
         if ($tenant->getBrandLogo()){
             Filament::getCurrentPanel()->brandLogo($tenant->getBrandLogo());
             Filament::getCurrentPanel()->brandLogoHeight('3.5rem');
-
         }
 
         // Set the tenant-specific primary color

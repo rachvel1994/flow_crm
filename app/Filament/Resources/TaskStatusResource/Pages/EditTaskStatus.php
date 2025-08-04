@@ -5,9 +5,12 @@ namespace App\Filament\Resources\TaskStatusResource\Pages;
 use App\Filament\Resources\TaskStatusResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Noxo\FilamentActivityLog\Extensions\LogEditRecord;
 
 class EditTaskStatus extends EditRecord
 {
+    use LogEditRecord;
+
     protected static string $resource = TaskStatusResource::class;
 
     protected function getHeaderActions(): array
@@ -27,5 +30,11 @@ class EditTaskStatus extends EditRecord
     protected function afterSave(): void
     {
         $this->afterCreate();
+        $this->logRecordAfter($this->record);
+    }
+
+    public function beforeValidate(): void
+    {
+        $this->logRecordBefore($this->record);
     }
 }

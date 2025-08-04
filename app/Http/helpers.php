@@ -70,24 +70,6 @@ if (!function_exists('send_sms')) {
     }
 }
 
-if (!function_exists('resend_send_sms')) {
-
-    /**
-     * @throws RandomException
-     */
-    function resend_send_sms($mobile): void
-    {
-        $code = random_int(100000, 999999);
-
-        auth()->user()->update([
-            'sms_code' => $code
-        ]);
-
-        send_sms($mobile, "Verification code - $code");
-    }
-}
-
-
 if (!function_exists('mobile_format')) {
     function mobile_format($mobile): string
     {
@@ -177,7 +159,6 @@ if (!function_exists('single_pay')) {
     }
 }
 
-
 if (!function_exists('multi_pay')) {
     function multi_pay(array $ids): void
     {
@@ -228,37 +209,6 @@ if (!function_exists('multi_pay')) {
         ]);
 
         session()->flash('success', 'გადახდები წარმატებით შესრულდა.');
-    }
-}
-
-
-if (!function_exists('calculate_price')) {
-    function calculate_price($id, $kg): float
-    {
-        $country = Country::find($id);
-
-        return round($kg * $country->kg_price * $country->dollar_price, 2);
-    }
-}
-
-if (!function_exists('is_admin')) {
-    function is_admin(): bool
-    {
-        return (bool)auth()->user()->hasRole('super_admin');
-    }
-}
-
-if (!function_exists('is_turkey')) {
-    function is_turkey(): bool
-    {
-        return (bool)auth()->user()->hasRole('turkey');
-    }
-}
-
-if (!function_exists('is_china')) {
-    function is_china(): bool
-    {
-        return (bool)auth()->user()->hasRole('china');
     }
 }
 
@@ -433,18 +383,3 @@ if (!function_exists('languages')) {
         return $languageMap;
     }
 }
-
-if (!function_exists('panel_user')) {
-    function panel_user(string $permission = null): bool
-    {
-        $user = Filament::auth()->user();
-
-        if (!$user) {
-            return false;
-        }
-
-        return $permission ? $user->can($permission) : true;
-    }
-}
-
-

@@ -23,7 +23,7 @@ class ColorPolicy
      */
     public function view(User $user, Color $color): bool
     {
-        return $user->can('view_color');
+        return $user->can('{{ View }}');
     }
 
     /**
@@ -63,7 +63,7 @@ class ColorPolicy
      */
     public function forceDelete(User $user, Color $color): bool
     {
-        return $user->can('force_delete_color');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class ColorPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_color');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class ColorPolicy
      */
     public function restore(User $user, Color $color): bool
     {
-        return $user->can('restore_color');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class ColorPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_color');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class ColorPolicy
      */
     public function replicate(User $user, Color $color): bool
     {
-        return $user->can('replicate_color');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class ColorPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_color');
+        return $user->can('{{ Reorder }}');
     }
 }

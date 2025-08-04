@@ -54,9 +54,7 @@ class User extends Authenticate implements FilamentUser, HasTenants
 
     public function canAccessPanel(Panel $panel): bool
     {
-      //  return $this->can('can_access_panel_user');
-
-		return true;
+      return $this->can('can_access_panel_user');
     }
 
     public function teams(): BelongsToMany

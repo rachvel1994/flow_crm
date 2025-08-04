@@ -14,7 +14,7 @@ class CategoryLogger extends Logger
 {
     public static ?string $model = Category::class;
 
-    public static function getLabel(): string | Htmlable | null
+    public static function getLabel(): string|Htmlable|null
     {
         return CategoryResource::getModelLabel();
     }
@@ -23,10 +23,11 @@ class CategoryLogger extends Logger
     {
         return $logger
             ->fields([
-                //
+                Field::make('name')->label('სახელი'),
+                Field::make('is_active')->label('სტატუსი')->boolean(),
             ])
             ->relationManagers([
-                //
+                 RelationManager::make('products'),
             ]);
     }
 }

@@ -38,7 +38,7 @@ class TaskResource extends Resource implements  HasShieldPermissions
     protected static ?int $navigationSort = 2;
 
     protected static ?string $label = 'დავალება';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-plus-circle';
 
     public static function form(Form $form): Form
     {

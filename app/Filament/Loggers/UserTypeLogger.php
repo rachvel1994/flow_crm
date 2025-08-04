@@ -7,14 +7,13 @@ use App\Filament\Resources\UserTypeResource;
 use Illuminate\Contracts\Support\Htmlable;
 use Noxo\FilamentActivityLog\Loggers\Logger;
 use Noxo\FilamentActivityLog\ResourceLogger\Field;
-use Noxo\FilamentActivityLog\ResourceLogger\RelationManager;
 use Noxo\FilamentActivityLog\ResourceLogger\ResourceLogger;
 
 class UserTypeLogger extends Logger
 {
     public static ?string $model = UserType::class;
 
-    public static function getLabel(): string | Htmlable | null
+    public static function getLabel(): string|Htmlable|null
     {
         return UserTypeResource::getModelLabel();
     }
@@ -23,10 +22,8 @@ class UserTypeLogger extends Logger
     {
         return $logger
             ->fields([
-                //
-            ])
-            ->relationManagers([
-                //
+                Field::make('name')->label('ტიპი'),
+                Field::make('is_active')->label('სტატუსი')->boolean(),
             ]);
     }
 }

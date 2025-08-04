@@ -8,9 +8,12 @@ use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Noxo\FilamentActivityLog\Extensions\LogEditRecord;
 
 class EditRole extends EditRecord
 {
+    use LogEditRecord;
+
     protected static string $resource = RoleResource::class;
 
     public Collection $permissions;
@@ -50,5 +53,12 @@ class EditRole extends EditRecord
         });
 
         $this->record->syncPermissions($permissionModels);
+
+        $this->logRecordAfter($this->record);
+    }
+
+    public function beforeValidate(): void
+    {
+        $this->logRecordBefore($this->record);
     }
 }

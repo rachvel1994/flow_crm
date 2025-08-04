@@ -14,7 +14,7 @@ class ColorLogger extends Logger
 {
     public static ?string $model = Color::class;
 
-    public static function getLabel(): string | Htmlable | null
+    public static function getLabel(): string|Htmlable|null
     {
         return ColorResource::getModelLabel();
     }
@@ -23,10 +23,13 @@ class ColorLogger extends Logger
     {
         return $logger
             ->fields([
-                //
+                Field::make('name')->label('ფერი'),
+                Field::make('is_active')->label('სტატუსი')->boolean(),
+                Field::make('team_id')->label('ჯგუფი'),
             ])
             ->relationManagers([
-                //
+                // Optional: log related team info if needed
+                RelationManager::make('team')->label('ჯგუფი'),
             ]);
     }
 }

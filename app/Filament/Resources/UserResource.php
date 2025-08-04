@@ -111,19 +111,19 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->searchable()
                     ->relationship('teams', 'name')
                     ->required(),
+            ]),
+
+            Grid::make(3)->schema([
+                TextInput::make('mobile')->label('მობილური')
+                    ->required(),
+                TextInput::make('address')->label('მისამართი')
+                    ->required(),
                 Select::make('visibleContactTypes')
                     ->label('ჯგუფების ნახვის უფლება')
                     ->preload()
                     ->multiple()
                     ->searchable()
                     ->relationship('visibleContactTypes', 'name')
-                    ->required(),
-            ]),
-
-            Grid::make()->schema([
-                TextInput::make('mobile')->label('მობილური')
-                    ->required(),
-                TextInput::make('address')->label('მისამართი')
                     ->required(),
             ]),
 

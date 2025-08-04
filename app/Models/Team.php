@@ -40,7 +40,7 @@ class Team extends Model
 
     public function getPrimaryColorCode()
     {
-        return Arr::get($this->config, 'colors.primary', '#0099a8'); // Default primary color
+        return Arr::get($this->config ?? [], 'colors.primary') ?? '#0099a8';
     }
 
     public function members(): BelongsToMany

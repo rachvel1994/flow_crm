@@ -9,6 +9,7 @@ use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Http\Middleware\ApplyTenantScopes;
 use App\Models\Team;
 use Exception;
+use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -37,7 +38,7 @@ class BackendPanelProvider extends PanelProvider
             ->path('/')
             ->login()
             ->passwordReset()
-            ->registration()
+            ->font('Noto Serif Georgian', provider: GoogleFontProvider::class)
             ->tenant(Team::class, slugAttribute: 'slug')
             ->tenantRegistration(RegisterTeam::class)
             ->tenantProfile(EditTeam::class)

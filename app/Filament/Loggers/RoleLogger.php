@@ -2,13 +2,13 @@
 
 namespace App\Filament\Loggers;
 
-use App\Models\Role;
 use App\Filament\Resources\RoleResource;
 use Illuminate\Contracts\Support\Htmlable;
 use Noxo\FilamentActivityLog\Loggers\Logger;
 use Noxo\FilamentActivityLog\ResourceLogger\Field;
 use Noxo\FilamentActivityLog\ResourceLogger\RelationManager;
 use Noxo\FilamentActivityLog\ResourceLogger\ResourceLogger;
+use Spatie\Permission\Models\Role;
 
 class RoleLogger extends Logger
 {
@@ -23,10 +23,12 @@ class RoleLogger extends Logger
     {
         return $logger
             ->fields([
-                //
+                Field::make('name')->label('როლის სახელი'),
+                Field::make('guard_name')->label('Guard Name'),
+                Field::make('team_id')->label('გუნდი')->nullable(),
             ])
             ->relationManagers([
-                //
+                RelationManager::make('permissions')->label('უფლებები'),
             ]);
     }
 }

@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use FilamentTiptapEditor\TiptapEditor;
 
 class TaskStatusResource extends Resource implements HasShieldPermissions
 {
@@ -101,12 +102,13 @@ class TaskStatusResource extends Resource implements HasShieldPermissions
                     ->dehydrated(true),
             ]),
 
-            Forms\Components\Textarea::make('message')
+            TiptapEditor::make('message')
+                ->profile('simple')
                 ->label('შეტყობინება')
-                ->maxLength(1000)
-                ->rows(3)
                 ->columnSpanFull()
-                ->nullable(),
+                ->disableFloatingMenus()
+                ->disableBubbleMenus()
+                ->extraInputAttributes(['style' => 'min-height: 12rem;']),
 
 
         ]);

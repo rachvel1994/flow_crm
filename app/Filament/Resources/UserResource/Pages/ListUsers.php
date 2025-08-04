@@ -7,6 +7,8 @@ use App\Exports\UserExport;
 use App\Models\Task;
 use App\Models\TaskStatus;
 use Filament\Facades\Filament;
+use FilamentTiptapEditor\Enums\TiptapOutput;
+use FilamentTiptapEditor\TiptapEditor;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\User;
 use Filament\Actions;
@@ -162,9 +164,13 @@ class ListUsers extends ListRecords
                         ->label('სათაური')
                         ->required(),
 
-                    TinyEditor::make('message')
+                    TiptapEditor::make('message')
+                        ->profile('simple')
                         ->label('ტექსტი')
-                        ->required(),
+                        ->required()
+                        ->disableFloatingMenus()
+                        ->disableBubbleMenus()
+                        ->extraInputAttributes(['style' => 'min-height: 12rem;']),
 
                     Select::make('contacts')
                         ->label('კონტაქტებით არჩევა')
