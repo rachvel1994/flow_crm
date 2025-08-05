@@ -5,6 +5,7 @@ namespace App\Filament\Loggers;
 use App\Filament\Resources\TaskResource;
 use App\Models\Task;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 use Noxo\FilamentActivityLog\Loggers\Logger;
 use Noxo\FilamentActivityLog\ResourceLogger\Field;
 use Noxo\FilamentActivityLog\ResourceLogger\RelationManager;
@@ -26,11 +27,11 @@ class TaskLogger extends Logger
                 Field::make('title')->label('დასახელება'),
                 Field::make('price')->label('ფასი'),
                 Field::make('priority')->label('პრიორიტეტი'),
-                Field::make('started_at')->label('დაწყების დრო'),
-                Field::make('deadline')->label('დედლაინი'),
+                Field::make('started_at')->label('დაწყების დრო')->datetime(),
+                Field::make('deadline')->label('დედლაინი')->datetime(),
                 Field::make('status.name')->label('ეტაპი'),
                 Field::make('code')->label('კოდი'),
-                Field::make('description')->label('დამატებითი ინფორმაცია'),
+                Field::make('description')->label('დამატებითი ინფორმაცია')->formatStateUsing(fn($state) => new HtmlString($state)),
             ])
             ->relationManagers([
                 RelationManager::make('steps')->label('ნაბიჯები'),

@@ -5,6 +5,7 @@ namespace App\Filament\Loggers;
 use App\Models\Product;
 use App\Filament\Resources\ProductResource;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 use Noxo\FilamentActivityLog\Loggers\Logger;
 use Noxo\FilamentActivityLog\ResourceLogger\Field;
 use Noxo\FilamentActivityLog\ResourceLogger\RelationManager;
@@ -32,11 +33,13 @@ class ProductLogger extends Logger
                 Field::make('is_active')->label('სტატუსი')->boolean(),
                 Field::make('category.name')->label('კატეგორია'),
                 Field::make('color.name')->label('ფერი'),
-                Field::make('tags')->label('თეგები'),
-                Field::make('description')->label('აღწერა'),
+                Field::make('tags.name')
+                    ->label('თეგები')
+                    ->badge()
+                    ->hasMany('tags'),
+                Field::make('description')->label('აღწერა')->formatStateUsing(fn($state) => new HtmlString($state)),
             ])
             ->relationManagers([
-                // Add relations if needed later
                 RelationManager::make('team')->label('გუნდი'),
             ]);
     }

@@ -28,7 +28,6 @@ class ColorLogger extends Logger
                 Field::make('team_id')->label('ჯგუფი'),
             ])
             ->relationManagers([
-                // Optional: log related team info if needed
                 RelationManager::make('team')->label('ჯგუფი'),
             ]);
     }

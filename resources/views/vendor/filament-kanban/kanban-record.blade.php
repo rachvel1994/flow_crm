@@ -1,4 +1,5 @@
-<div wire:poll
+@php use Illuminate\Support\Str; @endphp
+<div  wire:poll.visible
      id="{{ $record->getKey() }}"
      wire:click="recordClicked('{{ $record->getKey() }}', {{ @json_encode($record) }})"
      class="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:shadow-2xl transition duration-300 ease-in-out rounded-2xl p-6 cursor-pointer space-y-4"
@@ -6,7 +7,7 @@
     {{-- Header --}}
     <div class="flex justify-between items-start">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2">
-            {{ \Illuminate\Support\Str::limit($record->{static::$recordTitleAttribute}, 10) }}
+            {{ Str::limit($record->{static::$recordTitleAttribute}, 10) }}
         </h3>
         <span
             class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300 font-semibold">
@@ -16,7 +17,7 @@
 
     {{-- Description --}}
     <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-        {!! \Illuminate\Support\Str::limit($record->description) !!}
+        {!! Str::limit($record->description) !!}
     </p>
 
     {{-- File & Photo Indicators --}}

@@ -62,9 +62,4 @@
             }
         });
     });
-
-    window.addEventListener('open-edit-task-modal', event => {
-        const taskId = event.detail.taskId;
-        Livewire.dispatch('openEditTaskModal', taskId);
-    });
 </script>

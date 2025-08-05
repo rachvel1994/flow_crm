@@ -25,7 +25,7 @@ class RoleLogger extends Logger
             ->fields([
                 Field::make('name')->label('როლის სახელი'),
                 Field::make('guard_name')->label('Guard Name'),
-                Field::make('team_id')->label('გუნდი')->nullable(),
+                Field::make('team_id')->label('გუნდი'),
             ])
             ->relationManagers([
                 RelationManager::make('permissions')->label('უფლებები'),

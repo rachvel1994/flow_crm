@@ -4,6 +4,7 @@ namespace App\Filament\Loggers;
 
 use App\Filament\Resources\UserResource;
 use App\Models\User;
+use App\Models\UserType;
 use Illuminate\Contracts\Support\Htmlable;
 use Noxo\FilamentActivityLog\Loggers\Logger;
 use Noxo\FilamentActivityLog\ResourceLogger\Field;
@@ -39,7 +40,7 @@ class UserLogger extends Logger
                 Field::make('type_id')
                     ->label('კონტაქტის ტიპი')
                     ->badge()
-                    ->hasOne('user_type'),
+                    ->formatStateUsing(fn ($state) => UserType::firstWhere('id', $state)?->name),
                 Field::make('roles.name')
                     ->label('როლები')
                     ->badge()

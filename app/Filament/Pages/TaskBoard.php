@@ -19,17 +19,19 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\ViewField;
+use Filament\Forms\Form;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Contracts\Support\Htmlable;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Mokhosh\FilamentKanban\Pages\KanbanBoard;
+use Noxo\FilamentActivityLog\Extensions\LogCreateRecord;
+use Noxo\FilamentActivityLog\Extensions\LogEditRecord;
 
 class TaskBoard extends KanbanBoard
 {
-    use HasPageShield;
+    use HasPageShield, LogCreateRecord;
 
     protected static string $model = Task::class;
     protected static string $recordStatusAttribute = 'status_id';
@@ -41,7 +43,7 @@ class TaskBoard extends KanbanBoard
     protected string $editModalSaveButtonLabel = 'დამატება';
 
     protected string $editModalCancelButtonLabel = 'გაუქმება';
-    protected string $editModalWidth = '7xl';
+    protected string $editModalWidth = '6xl';
 
     public bool $disableEditModal = false;
 
@@ -117,8 +119,10 @@ class TaskBoard extends KanbanBoard
         if (!$this->canMoveTask($task, $currentStatus, $newStatus)) {
             return;
         }
+
         $this->dispatch('notify-sound-on-change');
         $task->update(['status_id' => $newStatusId]);
+
         Task::setNewOrder($toOrderedIds);
     }
 
@@ -177,12 +181,11 @@ class TaskBoard extends KanbanBoard
 
     protected function getHeaderActions(): array
     {
-
-
         return [
             CreateAction::make()
                 ->model(Task::class)
                 ->label('ახალი დავალება')
+                ->modalHeading('დავალების დამატება')
                 ->form([
                     Grid::make(3)
                         ->schema([
@@ -318,12 +321,11 @@ class TaskBoard extends KanbanBoard
                         }),
                 ])
                 ->action(function (array $data, $livewire) {
-                    Task::create($data);
-
+                    $task = Task::create($data);
+                    $this->logRecordCreated($task);
                     $livewire->dispatch('notify-sound');
                 }),
         ];
-
     }
 
     /**
@@ -414,17 +416,13 @@ class TaskBoard extends KanbanBoard
                         ->directory('tasks/images')
                         ->previewable(),
                 ]),
-
-            ViewField::make('logo_preview')
-                ->label('ლოგოს წინასწარი ნახვა')
-                ->view('components.image-modal-thumb')
-                ->visible(fn($record) => filled($record?->images)),
             Select::make('assignees')
                 ->label('დავალებული პირები')
                 ->multiple()
                 ->relationship('assignees', 'name')
                 ->preload()
                 ->searchable(),
+
         ];
     }
 
